@@ -1,14 +1,14 @@
 from termcolor import colored
-from random import randint
+import random
 
 field = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 player, player2, computer = '', '', ''
 X = "\U0000274C"
 O = "\U00002B55"
-lose = "\U0001F641"
-win = "\U0001F31F"
-middle = 5
-combination_for_win = ((0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6), (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6))
+LOSE = "\U0001F641"
+WIN = "\U0001F31F"
+MIDDLE = 5
+COMBINATION_FOR_WIN = ((0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6), (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6))
 
 
 def who_is_who_mes(p1, p2, comp=False):
@@ -18,12 +18,11 @@ def who_is_who_mes(p1, p2, comp=False):
         print('Player plays for %s, computer plays for %s' % (p1, p2))
 
 def color_fields(c):
-    color_char = c
     if c == X:
-        color_char = colored(c, "red")
-    if c == O:
-        color_char = colored(c, "green")
-    return color_char
+        return colored(c, "red")
+    elif c == O:
+        return colored(c, "green")
+    return c
 
 def draw_field(fields):
     print("______________________")
@@ -31,19 +30,24 @@ def draw_field(fields):
         print(" | ", color_fields(fields[0 + j*3]), " | ", color_fields(fields[1 + j * 3]), " | ", color_fields(fields[2 + j * 3]), " | ")
         print("______________________")
 
+
 def step_ability(brd, step):
-    can = True if step in range(1, 10) and brd[step - 1] not in (X, O) else False
-    return can
+    return True if step in range(1, 10) and brd[step - 1] not in (X, O) else False
+
 
 
 def make_step(fields, pl, step, fl=False):
+    """
+    :param pl: символ игрока
+    :param fl: нужен ли шаг
+    """
     victory = False
-    if step_ability(fields, step):
+    if step_ability(fields, step): # если есть возможность сделать шаг
         fields[step - 1] = pl
-        for combination in combination_for_win:
+        for combination in COMBINATION_FOR_WIN:
             victory = True
             for pos in combination:
-                if fields[pos] != pl:
+                if fields[pos] != pl: # сравнение выигрышных комбинаций с положением игрока на поле
                     victory = False
                     break
             if victory:
@@ -55,21 +59,31 @@ def make_step(fields, pl, step, fl=False):
 
 
 def make_step_helper(f, fields, p, step):
+    """
+    :param f:range(1, 10)
+    :param p:символ игрока
+    :return: шаг, который помешает противнику победить, если есть необходимость
+    """
     for i in f:
-        if make_step(fields, p, i, True)[1]:
+         if make_step(fields, p, i, True)[1]:
             step = i
             break
     return step
 
 
 def computer_step(first=False):
+    """
+    Функция реализующая ИИ
+    :param first: Первый ли это ход
+    :return:результат игры
+    """
     f = range(1, 10)
     step = -1
-    if first and step_ability(field, middle):
-        step = middle
-    step = make_step_helper(f, field, computer, step)
+    if first and step_ability(field, MIDDLE):# если ход первый и ячейка не занята, то ставить на середину
+        step = MIDDLE
+    step = make_step_helper(f, field, computer, step) # ход компьютера
     if step == -1:
-        step = make_step_helper(f, field, player, step)
+        step = make_step_helper(f, field, player, step) # помешать игроку
         for mv in f:
             if step == -1 and step_ability(field, mv):
                 step = mv
@@ -88,25 +102,33 @@ def first_step(pl):
 
 
 def who_goes_first(p1, p2, live=False):
+    """
+    :param p1, p1: символ игрока
+    :param live:  является ли игра игрой между людьми
+    """
     if p1 == X:
-        if not live:
+        if not live: # если игра с компьютером, но у игрока Х
             print("The player goes first")
             safe_step(p1, field)
             computer_step(True)
-        else:
+        else: #если игра с человеком и у первого игрока Х
             print("The player number one goes first")
             safe_step(p1, field, False)
             safe_step(p2, field, False)
-    if p2 == X and not live:
+    if p2 == X and not live: #если игра с компьютером, но у компьютера Х
         print("The computer goes first")
         computer_step(True)
-    if p2 == X and live:
+    if p2 == X and live: #если игра с человеком и у второго игрока Х
         print("The player number two goes first")
         safe_step(p2, field, False)
-    return True
 
 
 def safe_step(pl, fields, comp=True):
+    """
+    :param pl: символ игрока
+    :param fields: поле
+    :param comp:  играет ли человек с компьютером
+    """
     victory, step = False, False
     while not step:
         tmp = False
@@ -114,27 +136,31 @@ def safe_step(pl, fields, comp=True):
             f_step = first_step(pl)
             tmp = f_step[0]
         step, victory = make_step(fields, pl, f_step[1])
-        if not comp: draw_field(fields)
+        if not comp: draw_field(fields) # если игра с человеком, отрисовываем поле
         if not step: print('You entered the wrong number or the place is already taken. Try again')
     return victory
 
 
 def playing_with_computer(pl, comp):
+    """
+    :param pl:символ игрока
+    :param comp:символ игрока
+    """
     who_is_who_mes(pl, comp, True)
     r = ''
     while field.count(X) + field.count(O) != len(field):
         draw_field(field)
-        if field.count(X) + field.count(O) == 0:
+        if field.count(X) + field.count(O) == 0: #если ход еще не сделан никем из игроков
             tmp = who_goes_first(pl, comp, False)
             if not tmp:
                 continue
         else:
             victory = safe_step(pl, field)
             if victory:
-                r = '%s You are the winner %s' % (win, win)
+                r = '%s You are the winner %s' % (WIN, WIN)
                 break
             elif computer_step()[1]:
-                r = '%s You loooose %s' % (lose, lose)
+                r = '%s You loooose %s' % (LOSE, LOSE)
                 break
             else:
                 r = "Friendship between man and computer won!"
@@ -143,24 +169,29 @@ def playing_with_computer(pl, comp):
 
 
 def playing_with_human(pl, pl2):
+    """
+    Функция реализующая режим игры между людьми
+    :param pl: символ игрока
+    :param pl2: символ игрока
+    """
     who_is_who_mes(pl, pl2, False)
     r = ''
     draw_field(field)
     while field.count(X) + field.count(O) != len(field):
         if field.count(X) + field.count(O) == 0:
-            tmp = who_goes_first(pl, pl2, True)
+            tmp = who_goes_first(pl, pl2, True)  # так как по правилам игры первым ходит игрок с символом Х
             if not tmp:
                 continue
         else:
             victory = safe_step(pl, field, False)
             if victory:
-                r = '%s %s the winner %s' % (win, pl, win)
+                r = '%s %s the winner %s' % (WIN, pl, WIN)
                 break
             if not field.count(X) + field.count(O) != len(field):
                 break
             victory = safe_step(pl2, field, False)
             if victory:
-                r = '%s %s the winner %s' % (win, pl2, win)
+                r = '%s %s the winner %s' % (WIN, pl2, WIN)
                 break
             else:
                 r = "Friendship won!"
@@ -168,15 +199,16 @@ def playing_with_human(pl, pl2):
 
 
 def rand_symbol_choice():
-    chars = (X, O)
-    chars = (chars[::-1] if randint(0, 1) == 0 else chars)
+    chars = [O, X]
+    random.shuffle(chars)
     return chars
 
 
 print(colored("To play with a computer, enter 1, to play with a person, enter 2, to exit enter \'exit\'", "blue"))
 decision = input()
+# TODO
 if decision == "1":
-    player, computer = rand_symbol_choice()
+    player, computer = rand_symbol_choice()  # рандомный выбор символа
     playing_with_computer(player, computer)
 elif decision == "2":
     player, player2 = rand_symbol_choice()
