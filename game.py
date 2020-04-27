@@ -206,7 +206,6 @@ def rand_symbol_choice():
 
 print(colored("To play with a computer, enter 1, to play with a person, enter 2, to exit enter \'exit\'", "blue"))
 decision = input()
-# TODO
 if decision == "1":
     player, computer = rand_symbol_choice()  # рандомный выбор символа
     playing_with_computer(player, computer)
